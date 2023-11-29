@@ -43,12 +43,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>1.18.22</version> <!-- Możesz użyć najnowszej wersji -->
-      <scope>provided</scope>
-    </dependency>
 
     <!-- https://mvnrepository.com/artifact/io.vertx/vertx-web -->
     <dependency>
@@ -89,6 +83,11 @@
       <groupId>org.mongodb</groupId>
       <artifactId>mongodb-driver-sync</artifactId>
       <version>4.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.26</version>
     </dependency>
 
 
