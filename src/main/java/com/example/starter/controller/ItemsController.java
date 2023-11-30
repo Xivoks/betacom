@@ -1,7 +1,6 @@
 package com.example.starter.controller;
 
-import com.example.starter.database.MongoDatabaseManager;
-import com.mongodb.client.MongoCollection;
+import com.example.starter.service.ItemsService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -12,17 +11,15 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.bson.Document;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class ItemsController {
-  private final MongoDatabaseManager databaseManager;
   private final JWTAuth jwtAuth;
+  private final ItemsService itemsService;
 
-  public ItemsController(MongoDatabaseManager databaseManager, JWTAuth jwtAuth) {
-    this.databaseManager = databaseManager;
+  public ItemsController(JWTAuth jwtAuth, ItemsService itemsService) {
     this.jwtAuth = jwtAuth;
+    this.itemsService = itemsService;
   }
 
   public void register(Router router) {
@@ -40,12 +37,7 @@ public class ItemsController {
         if (requestBody != null && requestBody.containsKey("itemName")) {
           String itemName = requestBody.getString("itemName");
 
-          Document itemDocument = new Document()
-            .append("id", UUID.randomUUID().toString())
-            .append("owner", userId)
-            .append("name", itemName);
-
-          databaseManager.getCollection("items").insertOne(itemDocument);
+          Document itemDocument = itemsService.createItem(userId, itemName);
 
           JsonObject response = new JsonObject()
             .put("message", "Przedmiot został utworzony")
@@ -69,9 +61,7 @@ public class ItemsController {
         User user = authResult.result();
         String userId = user.principal().getString("sub");
 
-        MongoCollection<Document> itemsCollection = databaseManager.getCollection("items");
-        Document query = new Document("owner", userId);
-        List<Document> userItems = itemsCollection.find(query).into(new ArrayList<>());
+        List<Document> userItems = itemsService.getItemsByOwner(userId);
 
         JsonObject itemsResponse = new JsonObject()
           .put("items", userItems);
