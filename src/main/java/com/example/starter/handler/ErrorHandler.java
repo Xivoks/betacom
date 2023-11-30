@@ -7,17 +7,19 @@ public class ErrorHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext ctx) {
-    int statusCode = ctx.statusCode();
-    String errorMessage = "Wystąpił błąd podczas przetwarzania żądania.";
-
-    if (statusCode == 401) {
-      errorMessage = "Brak autoryzacji.";
-    } else if (statusCode == 404) {
-      errorMessage = "Strona nie znaleziona.";
+    if (ctx.response().ended()) {
+      return;
     }
 
-    ctx.response()
-      .setStatusCode(statusCode)
-      .end(errorMessage);
+    Throwable failure = ctx.failure();
+    if (failure != null) {
+      ctx.response()
+        .setStatusCode(500)
+        .end("Internal Server Error");
+    } else {
+      ctx.response()
+        .setStatusCode(404)
+        .end("Not Found");
+    }
   }
 }
