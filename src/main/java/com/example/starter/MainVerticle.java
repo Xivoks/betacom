@@ -30,15 +30,13 @@ public class MainVerticle extends AbstractVerticle {
 
     JWTAuth jwtAuth = JWTAuthConfig.createJWTAuthProvider(vertx);
     JWTAuthProvider jwtAuthProvider = new JWTAuthProvider(jwtAuth);
-
-    TokenController tokenController = new TokenController(jwtAuth, jwtAuthProvider);
-
+    TokenController tokenController = new TokenController(jwtAuth, jwtAuthProvider, databaseManager.getDatabase());
     router.route("/secure/*").handler(tokenController::secureEndpoint);
 
-    router.get("/generate-token").handler(tokenController::generateToken);
+    router.get("/generate-token").handler(tokenController::generateTokens);
     AuthenticationService authService = new AuthenticationServiceImpl(databaseManager);
-    LoginController loginController = new LoginController(jwtAuth, authService);
 
+    LoginController loginController = new LoginController(jwtAuth, authService, databaseManager);
     loginController.register(router);
 
     RegisterController.register(router);
