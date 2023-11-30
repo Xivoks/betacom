@@ -11,6 +11,7 @@ import com.example.starter.jwtauth.JWTAuthProvider;
 import com.example.starter.service.AuthenticationService;
 import com.example.starter.service.AuthenticationServiceImpl;
 import com.example.starter.service.ItemsService;
+import com.example.starter.service.RegisterService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -37,11 +38,12 @@ public class MainVerticle extends AbstractVerticle {
     router.get("/generate-token").handler(tokenController::generateTokens);
     AuthenticationService authService = new AuthenticationServiceImpl(databaseManager);
     ItemsService itemsService = new ItemsService(databaseManager);
+    RegisterService registerService = new RegisterService(databaseManager, jwtAuth);
 
     LoginController loginController = new LoginController(jwtAuth, authService, databaseManager);
     loginController.register(router);
 
-    RegisterController registerController = new RegisterController(databaseManager, jwtAuth);
+    RegisterController registerController = new RegisterController(registerService);
     router.post("/register").handler(registerController::register);
 
 
