@@ -25,29 +25,27 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start() {
     databaseManager = new MongoDatabaseManager();
-    HttpServer server = vertx.createHttpServer();
-    Router router = Router.router(vertx);
-
-    router.route().handler(BodyHandler.create());
-
     JWTAuth jwtAuth = JWTAuthConfig.createJWTAuthProvider(vertx);
     JWTAuthProvider jwtAuthProvider = new JWTAuthProvider(jwtAuth);
-    TokenController tokenController = new TokenController(jwtAuth, jwtAuthProvider, databaseManager.getDatabase());
-    router.route("/secure/*").handler(tokenController::secureEndpoint);
 
-    router.get("/generate-token").handler(tokenController::generateTokens);
     AuthenticationService authService = new AuthenticationServiceImpl(databaseManager);
     ItemsService itemsService = new ItemsService(databaseManager);
     RegisterService registerService = new RegisterService(databaseManager, jwtAuth);
 
+    TokenController tokenController = new TokenController(jwtAuth, jwtAuthProvider, databaseManager.getCollection("users"));
     LoginController loginController = new LoginController(jwtAuth, authService, databaseManager);
-    loginController.register(router);
-
     RegisterController registerController = new RegisterController(registerService);
+    ItemsController itemsController = new ItemsController(jwtAuth, itemsService);
+
+    HttpServer server = vertx.createHttpServer();
+    Router router = Router.router(vertx);
+    router.route().handler(BodyHandler.create());
+
+
+    router.route("/secure/*").handler(tokenController::secureEndpoint);
+    router.get("/generate-token").handler(tokenController::generateTokens);
+    loginController.register(router);
     router.post("/register").handler(registerController::register);
-
-
-    ItemsController itemsController = new ItemsController(jwtAuth,itemsService);
     itemsController.register(router);
 
     router.errorHandler(500, new ErrorHandler());
