@@ -2,11 +2,11 @@ package com.example.starter.controller;
 
 import com.example.starter.database.MongoDatabaseManager;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.auth.User;
 import org.bson.Document;
 
 import java.util.UUID;
@@ -36,7 +36,7 @@ public class ItemsController {
 
           JsonObject requestBody = ctx.getBodyAsJson();
           if (requestBody != null) {
-            String itemName = requestBody.getString("name");
+            String itemName = requestBody.getString("itemName");
 
             Document itemDocument = new Document()
               .append("id", UUID.randomUUID().toString())

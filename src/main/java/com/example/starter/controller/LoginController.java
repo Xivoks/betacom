@@ -3,7 +3,6 @@ package com.example.starter.controller;
 import com.example.starter.database.MongoDatabaseManager;
 import com.example.starter.service.AuthenticationService;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.UpdateResult;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
@@ -11,7 +10,6 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 public class LoginController {
 
@@ -41,16 +39,25 @@ public class LoginController {
       System.out.println("Password: " + password);
 
       if (authService.verifyLogin(login, password)) {
+        Document userDocument = getUserDocumentFromDatabase(login);
 
-        String refreshToken = jwtAuth.generateToken(
-          new JsonObject().put("sub", "example-user-refresh"),
-          new JWTOptions().setExpiresInMinutes(1440)
-        );
-        updateRefreshTokenInDatabase(login, refreshToken);
+        if (userDocument != null) {
+          String userId = userDocument.getString("id");
+          String refreshToken = jwtAuth.generateToken(
+            new JsonObject().put("sub", login).put("userId", userId),
+            new JWTOptions().setExpiresInMinutes(1440)
+          );
 
-        JsonObject response = new JsonObject().put("token", refreshToken).put("message", "Witaj, " + login);
+          if (updateRefreshTokenInDatabase(login, refreshToken)) {
+            JsonObject response = new JsonObject().put("token", refreshToken).put("message", "Witaj, " + login);
 
-        ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
+            ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
+          } else {
+            ctx.response().setStatusCode(500).end("Failed to update refreshToken");
+          }
+        } else {
+          ctx.response().setStatusCode(500).end("User ID not found");
+        }
       } else {
         ctx.response().setStatusCode(401).end("Authentication failed");
       }
@@ -58,19 +65,22 @@ public class LoginController {
       ctx.response().setStatusCode(400).end("Invalid request body format");
     }
   }
-  private void updateRefreshTokenInDatabase(String userId, String refreshToken) {
-    MongoCollection<Document> refreshTokenCollection = databaseManager.getCollection("users");
 
-    Bson filter = Filters.eq("login", userId);
+  private Document getUserDocumentFromDatabase(String login) {
+    MongoCollection<Document> usersCollection = databaseManager.getCollection("users");
 
-    Document updateDocument = new Document("$set", new Document("token", refreshToken));
+    Document query = new Document("login", login);
+    return usersCollection.find(query).first();
+  }
 
-    UpdateResult updateResult = refreshTokenCollection.updateOne(filter, updateDocument);
+  private boolean updateRefreshTokenInDatabase(String login, String refreshToken) {
+    MongoCollection<Document> usersCollection = databaseManager.getCollection("users");
 
-    if (updateResult.getModifiedCount() == 1) {
-      System.out.println("RefreshToken został zaktualizowany.");
-    } else {
-      System.out.println("Nie udało się zaktualizować refreshToken.");
-    }
+    Document query = new Document("login", login);
+    Document update = new Document("$set", new Document("token", refreshToken));
+
+    UpdateResult updateResult = usersCollection.updateOne(query, update);
+
+    return updateResult.getModifiedCount() > 0;
   }
 }
