@@ -9,6 +9,8 @@ import io.vertx.ext.web.RoutingContext;
 import org.bson.Document;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.util.UUID;
+
 public class RegisterController {
   private final MongoDatabaseManager databaseManager;
   private final JWTAuth jwtAuth;
@@ -51,16 +53,19 @@ public class RegisterController {
     long count = usersCollection.countDocuments(query);
     return count > 0;
   }
+
   private void saveUserToDatabase(String login, String hashedPassword) {
     MongoCollection<Document> usersCollection = databaseManager.getCollection("users");
     String token = jwtAuth.generateToken(
       new JsonObject().put("sub", "example-user-refresh"),
       new JWTOptions().setExpiresInMinutes(1440)
     );
+    UUID userId = UUID.randomUUID();
     Document userDocument = new Document()
+      .append("id", userId.toString())
       .append("login", login)
       .append("password", hashedPassword)
-      .append("token",token);
+      .append("token", token);
 
     usersCollection.insertOne(userDocument);
   }
