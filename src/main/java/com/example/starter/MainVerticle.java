@@ -39,7 +39,10 @@ public class MainVerticle extends AbstractVerticle {
     LoginController loginController = new LoginController(jwtAuth, authService, databaseManager);
     loginController.register(router);
 
-    RegisterController.register(router);
+    RegisterController registerController = new RegisterController(databaseManager, jwtAuth);
+    router.post("/register").handler(registerController::register);
+
+
     ItemsController.register(router);
 
     router.errorHandler(500, new ErrorHandler());
