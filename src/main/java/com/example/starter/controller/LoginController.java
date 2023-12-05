@@ -4,6 +4,7 @@ import com.example.starter.database.MongoDatabaseManager;
 import com.example.starter.service.AuthenticationService;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.UpdateResult;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -28,45 +29,69 @@ public class LoginController {
   }
 
   public void login(RoutingContext ctx) {
-    JsonObject requestBody = ctx.getBodyAsJson();
-    System.out.println("Request Body: " + requestBody);
+    try {
+      JsonObject requestBody = ctx.getBodyAsJson();
 
-    if (requestBody != null) {
+      if (requestBody == null) {
+        sendErrorResponse(ctx, 400, "Invalid request body format");
+        return;
+      }
+
       String login = requestBody.getString("login");
       String password = requestBody.getString("password");
 
-      System.out.println("Login: " + login);
-      System.out.println("Password: " + password);
-
-      if (authService.verifyLogin(login, password)) {
-        Document userDocument = getUserDocumentFromDatabase(login);
-
-        if (userDocument != null) {
-          String userId = userDocument.getString("id");
-          String refreshToken = jwtAuth.generateToken(
-            new JsonObject().put("sub", login).put("userId", userId),
-            new JWTOptions().setExpiresInMinutes(1440)
-          );
-
-          if (updateRefreshTokenInDatabase(login, refreshToken)) {
-            JsonObject response = new JsonObject().put("token", refreshToken).put("message", "Witaj, " + login);
-
-            ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
-          } else {
-            ctx.response().setStatusCode(500).end("Failed to update refreshToken");
-          }
-        } else {
-          ctx.response().setStatusCode(500).end("User ID not found");
-        }
-      } else {
-        ctx.response().setStatusCode(401).end("Authentication failed");
+      if (login == null || password == null) {
+        sendErrorResponse(ctx, 400, "Invalid login or password");
+        return;
       }
-    } else {
-      ctx.response().setStatusCode(400).end("Invalid request body format");
+
+      if (!authService.verifyLogin(login, password)) {
+        sendErrorResponse(ctx, 401, "Authentication failed");
+        return;
+      }
+
+      Document userDocument = getUserDocumentFromDatabase(login);
+
+      if (userDocument == null) {
+        sendErrorResponse(ctx, 404, "User not found");
+        return;
+      }
+
+      String userId = userDocument.getString("id");
+      String refreshToken = jwtAuth.generateToken(
+        new JsonObject().put("sub", login).put("userId", userId),
+        new JWTOptions().setExpiresInMinutes(1440)
+      );
+
+      if (!updateRefreshTokenInDatabase(login, refreshToken)) {
+        sendErrorResponse(ctx, 500, "Failed to update refreshToken");
+        return;
+      }
+
+      JsonObject response = new JsonObject().put("token", refreshToken).put("message", "Witaj, " + login);
+
+      ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
+    } catch (Exception e) {
+      // Handle other exceptions
+      sendErrorResponse(ctx, 500, "Internal Server Error");
     }
   }
 
-  private Document getUserDocumentFromDatabase(String login) {
+
+  public void sendErrorResponse(RoutingContext routingContext, int statusCode, String message) {
+    HttpServerResponse response = routingContext.response();
+
+    if (response != null) {
+      response.setStatusCode(statusCode);
+      response.end(message);
+    } else {
+      // Dodaj obsługę przypadku, gdy response jest null (np. logowanie błędu).
+      System.err.println("HttpServerResponse is null");
+    }
+  }
+
+
+  public Document getUserDocumentFromDatabase(String login) {
     MongoCollection<Document> usersCollection = databaseManager.getCollection("users");
 
     Document query = new Document("login", login);
