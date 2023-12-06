@@ -71,14 +71,19 @@ public class LoginController {
 
       JsonObject response = new JsonObject().put("token", refreshToken).put("message", "Witaj, " + login);
 
-      ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
+      HttpServerResponse httpServerResponse = ctx.response();
+
+      httpServerResponse.putHeader("content-type", "application/json");
+      httpServerResponse.setStatusCode(200);
+      httpServerResponse.end(response.encode());
+
     } catch (Exception e) {
       sendErrorResponse(ctx, 500, "Internal Server Error");
     }
   }
 
 
-  public void sendErrorResponse(RoutingContext routingContext, int statusCode, String message) {
+  private void sendErrorResponse(RoutingContext routingContext, int statusCode, String message) {
     HttpServerResponse response = routingContext.response();
 
     if (response != null) {
@@ -89,12 +94,13 @@ public class LoginController {
     }
   }
 
-
-  public Document getUserDocumentFromDatabase(String login) {
+  private Document getUserDocumentFromDatabase(String login) {
     MongoCollection<Document> usersCollection = databaseManager.getCollection("users");
 
     Document query = new Document("login", login);
-    return usersCollection.find(query).first();
+    FindIterable<Document> documents = usersCollection.find(query);
+    Document result = documents.first();
+    return result;
   }
 
   private boolean updateRefreshTokenInDatabase(String login, String refreshToken) {
