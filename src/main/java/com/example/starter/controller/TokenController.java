@@ -4,6 +4,7 @@ import com.example.starter.jwtauth.JWTAuthProvider;
 import com.example.starter.service.TokenService;
 import com.mongodb.client.MongoCollection;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.bson.Document;
 
@@ -13,6 +14,10 @@ public class TokenController {
 
   public TokenController(JWTAuth jwtAuth, JWTAuthProvider jwtAuthProvider, MongoCollection<Document> refreshTokenCollection) {
     this.tokenService = new TokenService(jwtAuth, jwtAuthProvider, refreshTokenCollection);
+  }
+  public void register(Router router) {
+    router.post("/generateTokens").handler(this::generateTokens);
+    router.get("/secureEndpoint").handler(this::secureEndpoint);
   }
 
   public void generateTokens(RoutingContext ctx) {

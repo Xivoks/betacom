@@ -2,6 +2,7 @@ package com.example.starter.controller;
 
 import com.example.starter.service.RegisterService;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 public class RegisterController {
@@ -11,7 +12,11 @@ public class RegisterController {
     this.registerService = registerService;
   }
 
-  public void register(RoutingContext ctx) {
+  public void register(Router router) {
+    router.post("/register").handler(this::register);
+  }
+
+  private void register(RoutingContext ctx) {
     JsonObject requestBody = ctx.getBodyAsJson();
     if (requestBody != null) {
       String login = requestBody.getString("login");

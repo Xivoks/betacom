@@ -2,6 +2,7 @@ package com.example.starter.controller;
 
 import com.example.starter.database.MongoDatabaseManager;
 import com.example.starter.service.AuthenticationService;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.UpdateResult;
 import io.vertx.core.http.HttpServerResponse;
@@ -30,7 +31,7 @@ public class LoginController {
 
   public void login(RoutingContext ctx) {
     try {
-      JsonObject requestBody = ctx.getBodyAsJson();
+      JsonObject requestBody = ctx.body().asJsonObject();
 
       if (requestBody == null) {
         sendErrorResponse(ctx, 400, "Invalid request body format");
@@ -64,7 +65,7 @@ public class LoginController {
       );
 
       if (!updateRefreshTokenInDatabase(login, refreshToken)) {
-        sendErrorResponse(ctx, 500, "Failed to update refreshToken");
+        sendErrorResponse(ctx, 400, "Failed to update refreshToken");
         return;
       }
 
@@ -72,7 +73,6 @@ public class LoginController {
 
       ctx.response().putHeader("content-type", "application/json").setStatusCode(200).end(response.encode());
     } catch (Exception e) {
-      // Handle other exceptions
       sendErrorResponse(ctx, 500, "Internal Server Error");
     }
   }
@@ -85,7 +85,6 @@ public class LoginController {
       response.setStatusCode(statusCode);
       response.end(message);
     } else {
-      // Dodaj obsługę przypadku, gdy response jest null (np. logowanie błędu).
       System.err.println("HttpServerResponse is null");
     }
   }

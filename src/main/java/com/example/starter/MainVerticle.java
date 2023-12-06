@@ -1,17 +1,11 @@
 package com.example.starter;
 
-import com.example.starter.controller.ItemsController;
 import com.example.starter.controller.LoginController;
-import com.example.starter.controller.RegisterController;
-import com.example.starter.controller.TokenController;
 import com.example.starter.database.MongoDatabaseManager;
 import com.example.starter.handler.ErrorHandler;
 import com.example.starter.jwtauth.JWTAuthConfig;
-import com.example.starter.jwtauth.JWTAuthProvider;
 import com.example.starter.service.AuthenticationService;
 import com.example.starter.service.AuthenticationServiceImpl;
-import com.example.starter.service.ItemsService;
-import com.example.starter.service.RegisterService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -26,27 +20,15 @@ public class MainVerticle extends AbstractVerticle {
   public void start() {
     databaseManager = new MongoDatabaseManager();
     JWTAuth jwtAuth = JWTAuthConfig.createJWTAuthProvider(vertx);
-    JWTAuthProvider jwtAuthProvider = new JWTAuthProvider(jwtAuth);
 
     AuthenticationService authService = new AuthenticationServiceImpl(databaseManager);
-    ItemsService itemsService = new ItemsService(databaseManager);
-    RegisterService registerService = new RegisterService(databaseManager, jwtAuth);
-
-    TokenController tokenController = new TokenController(jwtAuth, jwtAuthProvider, databaseManager.getCollection("users"));
     LoginController loginController = new LoginController(jwtAuth, authService, databaseManager);
-    RegisterController registerController = new RegisterController(registerService);
-    ItemsController itemsController = new ItemsController(jwtAuth, itemsService);
 
     HttpServer server = vertx.createHttpServer();
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
 
-
-    router.route("/secure/*").handler(tokenController::secureEndpoint);
-    router.get("/generate-token").handler(tokenController::generateTokens);
     loginController.register(router);
-    router.post("/register").handler(registerController::register);
-    itemsController.register(router);
 
     router.errorHandler(500, new ErrorHandler());
 
