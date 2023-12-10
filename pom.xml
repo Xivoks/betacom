@@ -125,6 +125,12 @@
       <version>3.24.2</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
+      <version>4.5.0</version>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 

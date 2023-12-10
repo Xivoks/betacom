@@ -13,16 +13,26 @@ public class RegisterController {
   }
 
   public void register(Router router) {
-    router.post("/register").handler(this::register);
+    router.post("/register").handler(this::handleRegistration);
   }
 
-  private void register(RoutingContext ctx) {
-    JsonObject requestBody = ctx.getBodyAsJson();
+  public void handleRegistration(RoutingContext ctx) {
+    JsonObject requestBody = ctx.body().asJsonObject();
+
     if (requestBody != null) {
       String login = requestBody.getString("login");
       String password = requestBody.getString("password");
 
-      if (registerService.registerUser(login, password)) {
+      if (login == null || password == null) {
+        ctx.response().setStatusCode(400)
+          .putHeader("content-type", "application/json")
+          .end(new JsonObject().put("message", "Login and password must be provided").encode());
+        return;
+      }
+
+      boolean registrationResult = registerService.registerUser(login, password);
+
+      if (registrationResult) {
         JsonObject response = new JsonObject().put("message", "Konto zostało utworzone");
         ctx.response().putHeader("content-type", "application/json").setStatusCode(201).end(response.encode());
       } else {

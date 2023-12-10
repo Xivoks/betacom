@@ -42,7 +42,7 @@ class LoginControllerTest {
 
 
   @Test
-  void login_RequestBodyNull() {
+  void login_InvalidRequestBodyFormat() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = null;
@@ -59,7 +59,7 @@ class LoginControllerTest {
   }
 
   @Test
-  void login_LoginNull() {
+  void login_InvalidLogin() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = mock(JsonObject.class);
@@ -90,7 +90,7 @@ class LoginControllerTest {
   }
 
   @Test
-  void login_VerifyLoginFalse() {
+  void login_AuthenticationFailed() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = mock(JsonObject.class);
@@ -119,7 +119,7 @@ class LoginControllerTest {
   }
 
   @Test
-  void login_userDocumentNull() {
+  void login_UserNotFound() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = mock(JsonObject.class);
@@ -158,7 +158,7 @@ class LoginControllerTest {
   }
 
   @Test
-  void login_IfUpdateRefreshTokenInDatabaseFalse() {
+  void login_FailedToUpdateRefreshToken() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = mock(JsonObject.class);
@@ -212,7 +212,7 @@ class LoginControllerTest {
   }
 
   @Test
-  void login() {
+  void login_SuccessfulLogin() {
     final RoutingContext ctx = mock(RoutingContext.class);
     final RequestBody requestBody = mock(RequestBody.class);
     final JsonObject jsonObject = mock(JsonObject.class);
